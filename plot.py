@@ -25,13 +25,16 @@ def parse(dir, name):
         freqs = [int(entry[1]) for entry in entries]
 
         num_intervals = 10
-        if (name == "freqs"):
+        if (name == "addr" or name == "tags"):
             tags = [int(entry[0]) for entry in entries]
             x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
             xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
             app_names.append(app)
             num_tags.append(len(tags))
-            xname = "Tag"
+            if (name == "addr"):
+                xname = "Address"
+            elif (name == "tags"):
+                xname = "Tag"
         else:
             tags = [entry[0] for entry in entries]
             xticks = []
@@ -46,8 +49,8 @@ def parse(dir, name):
         ax = fig.add_subplot(111)
 
         ax.scatter(tags, freqs, s=50)
-        ax.set_xticks(xticks)
-        ax.set_yticks(yticks)
+        #ax.set_xticks(xticks)
+        #ax.set_yticks(yticks)
         ax.set_xlabel(xname, size=LABEL_FONTSIZE)
         ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
         ax.set_title(app, size=1.25*LABEL_FONTSIZE)
@@ -59,6 +62,7 @@ def parse(dir, name):
         plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
         plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
 
+        #plt.show()
         plt.savefig(outdir + app + "_" + name + ".png")
 
 def final_plot(name, y_data):
@@ -79,8 +83,9 @@ def final_plot(name, y_data):
 
 def main():
     dir = sys.argv[1]
-    parse(dir, "seqs")
-    parse(dir, "freqs")
+    parse(dir, "addr")
+    parse(dir, "tags")
+    sys.exit(1)
 
     final_plot("num_seqs", num_seqs)
     final_plot("num_tags", num_tags)

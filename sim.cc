@@ -42,8 +42,12 @@ string join(const T& vec, char delim) {
   return new_str.str();
 }
 
-unordered_map<uint64_t, unsigned long> global_freq; // map of all tag frequencies
-unordered_map<string, unsigned long> seq; // map of all tag sequences
+unordered_map<uint64_t, unsigned long> global_addr_freq; // map of all addr frequencies
+unordered_map<uint64_t, unsigned long> global_tag_freq; // map of all tag frequencies
+unordered_map<uint64_t, unsigned long> global_pc_freq; // map of all pcs
+unordered_map<string, unsigned long> addr_seq; // map of all addr sequences
+unordered_map<string, unsigned long> tag_seq; // map of all tag sequences
+unordered_map<string, unsigned long> tag_pc; // map of tag+pc combinations
 
 uint64_t extract(int max, int min, uint64_t address) { //inclusive
   uint64_t maxmask = ((uint64_t)1 << (max+1))-1;
@@ -63,9 +67,9 @@ void simulate(ifstream& memfile) {
     getline(memfile, line);
     vector<string> parsing;
     unsigned long ld_id, time;
-    uint64_t address, pc, tag, prev_tag = 0;
+    uint64_t address, prev_address, pc, tag, prev_tag = 0;
     int hit;
-    string tag_seq;
+    string addr_seq_str, tag_seq_str, tag_pc_str;
 
     while (getline(memfile, line)) {
       // Parse memory trace
@@ -76,14 +80,29 @@ void simulate(ifstream& memfile) {
       pc = stoull(parsing.at(3), 0, 16);
       hit = stoi(parsing.at(4));
 
-      tag = address/NUM_SETS/BLK_OFFSET;
-      if (global_freq.find(tag) == global_freq.end()) global_freq[tag] = 0;
-      global_freq[tag]++; 
+      if (global_addr_freq.find(address) == global_addr_freq.end()) global_addr_freq[address] = 0;
+      global_addr_freq[address]++;
 
-      tag_seq = to_string(prev_tag) + "_" + to_string(tag);
-      if (seq.find(tag_seq) == seq.end()) seq[tag_seq] = 0;
-      seq[tag_seq]++;
+      addr_seq_str = to_string(prev_address) + "_" + to_string(address);
+      if (addr_seq.find(addr_seq_str) == addr_seq.end()) addr_seq[addr_seq_str] = 0;
+      addr_seq[addr_seq_str]++;
+      prev_address = address;
+
+      tag = address/NUM_SETS/BLK_OFFSET;
+      if (global_tag_freq.find(tag) == global_tag_freq.end()) global_tag_freq[tag] = 0;
+      global_tag_freq[tag]++; 
+
+      tag_seq_str = to_string(prev_tag) + "_" + to_string(tag);
+      if (tag_seq.find(tag_seq_str) == tag_seq.end()) tag_seq[tag_seq_str] = 0;
+      tag_seq[tag_seq_str]++;
       prev_tag = tag;
+
+      if (global_pc_freq.find(pc) == global_pc_freq.end()) global_pc_freq[pc] = 0;
+      global_pc_freq[pc]++;
+
+      tag_pc_str = to_string(tag) + "_" + to_string(pc);
+      if (tag_pc.find(tag_pc_str) == tag_pc.end()) tag_pc[tag_pc_str] = 0;
+      tag_pc[tag_pc_str]++;
 
       num_lines++;
     }
@@ -100,9 +119,10 @@ int main(int argc, char** argv) {
   // PARSE ARUGMENTS
   string filename = argv[1];
   string basename = filename.substr(filename.find_last_of("/\\") + 1);
-  string expname = split(basename, '.').at(0);
+  string expname = basename.substr(0, basename.size() - 4);
+  cout << basename << " " << expname << endl;
   ifstream memfile(filename);
-  ofstream freqfile, seqfile;
+  ofstream addrfile, tagfile, pcfile, addr_seq_file, tag_seq_file, tag_pc_file;
 
   // STATS SETUP
   string dir = "output/";
@@ -117,8 +137,12 @@ int main(int argc, char** argv) {
     cout << "Unable to create output directory!" << endl;
   }
 
-  freqfile.open(dir + "/freqs.txt");
-  seqfile.open(dir + "/seqs.txt");
+  addrfile.open(dir + "/addr.txt");
+  tagfile.open(dir + "/tags.txt");
+  pcfile.open(dir + "/pcs.txt");
+  addr_seq_file.open(dir + "/addr_seqs.txt");
+  tag_seq_file.open(dir + "/tag_seqs.txt");
+  tag_pc_file.open(dir + "/tag_pc.txt");
 
   // SIMULATION
   auto start = chrono::system_clock::now();
@@ -127,17 +151,37 @@ int main(int argc, char** argv) {
   chrono::duration<double> elapsed_seconds = end-start;
   cout << "Simulation Time: " << elapsed_seconds.count() << endl;
   
-  for (auto const &pair : global_freq) {
-    freqfile << pair.first << " " << pair.second << endl;
+  for (auto const &pair : global_addr_freq) {
+    addrfile << pair.first << " " << pair.second << endl;
   }
 
-  for (auto const &pair : seq) {
-    seqfile << pair.first << " " << pair.second << endl;
+  for (auto const &pair : global_tag_freq) {
+    tagfile << pair.first << " " << pair.second << endl;
+  }
+
+  for (auto const &pair : global_pc_freq) {
+    pcfile << pair.first << " " << pair.second << endl;
+  }
+
+  for (auto const &pair : addr_seq) {
+    addr_seq_file << pair.first << " " << pair.second << endl;
+  }
+
+  for (auto const &pair : tag_seq) {
+    tag_seq_file << pair.first << " " << pair.second << endl;
+  }
+
+  for (auto const &pair : tag_pc) {
+    tag_pc_file << pair.first << " " << pair.second << endl;
   }
 
   // CLEANUP
-  freqfile.close();
-  seqfile.close();
+  addrfile.close();
+  tagfile.close();
+  pcfile.close();
+  addr_seq_file.close();
+  tag_seq_file.close();
+  tag_pc_file.close();
 
   return 0;
 }
