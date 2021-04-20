@@ -96,8 +96,8 @@ def parse(dir, name):
         ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
         ax.set_title(app, size=1.25*LABEL_FONTSIZE)
         ax.set_yscale('log')
-        plt.setp(ax.get_xticklabels(), fontsize=12)
-        plt.setp(ax.get_yticklabels(), fontsize=12)
+        plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
+        plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
         
         #plt.show()
         plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
