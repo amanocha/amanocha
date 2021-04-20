@@ -8,16 +8,22 @@ import sys
 LABEL_FONTSIZE = 28
 TICK_FONTSIZE = 24
 ROUND = 1e7
+size=(25.0, 15.0)
+color='blue'
 outdir = "figs/"
 
 app_names = []
+num_addr = []
 num_tags = []
-num_seqs = []
+num_addr_seqs = []
+num_tag_seqs = []
 
 def parse(dir, name):
-    global app_names, num_tags, num_seqs
+    global app_names, num_tags, num_addr_seqs, num_tag_seqs
 
     for app in os.listdir(dir):
+
+        # ----- PARSE DATA -----
         print(app)
         freqfile = open(dir + "/" + app + "/" + name + ".txt")
         freqdata = freqfile.readlines()
@@ -30,21 +36,28 @@ def parse(dir, name):
             x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
             xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
             app_names.append(app)
-            num_tags.append(len(tags))
             if (name == "addr"):
                 xname = "Address"
+                num_addr.append(len(tags))
             elif (name == "tags"):
                 xname = "Tag"
+                num_tags.append(len(tags))
         else:
             tags = [entry[0] for entry in entries]
             xticks = []
-            num_seqs.append(len(tags))
-            xname = "Tag Sequence ID"
+            if (name == "addr_seqs"):
+                xname = "Address Sequence ID"
+                num_addr_seqs.append(len(tags))
+            elif (name == "tag_seqs"):
+                xname = "Tag Sequence ID"
+                num_tag_seqs.append(len(tags))
+            
 
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
 
-        fig = plt.figure(figsize=(25.0, 15.0))
+        # ----- CREATE FREQ PLOT -----
+        fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
         ax = fig.add_subplot(111)
 
@@ -64,6 +77,25 @@ def parse(dir, name):
 
         #plt.show()
         plt.savefig(outdir + app + "_" + name + ".png")
+
+        # ----- CREATE HISTOGRAM -----
+        fig = plt.figure(figsize=size)
+        fig.subplots_adjust(bottom=0.1)
+        ax1 = fig.add_subplot(111)
+
+        ax.hist(freqs, bins=20, color=color)
+        #ax.set_xticks(xticks)
+        #ax.set_yticks(yticks)
+        ax.set_xlabel("Bin", size=LABEL_FONTSIZE)
+        ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
+        ax.set_title(app, size=1.25*LABEL_FONTSIZE)
+        ax.set_yscale('log')
+        plt.setp(ax.get_xticklabels(), fontsize=12)
+        plt.setp(ax.get_yticklabels(), fontsize=12)
+        
+        #plt.show()
+        plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
+        sys.exit(1)
 
 def final_plot(name, y_data):
     fig = plt.figure(figsize=(25.0, 15.0))
@@ -85,6 +117,7 @@ def main():
     dir = sys.argv[1]
     parse(dir, "addr")
     parse(dir, "tags")
+    parse(dir, "pcs")
     sys.exit(1)
 
     final_plot("num_seqs", num_seqs)
