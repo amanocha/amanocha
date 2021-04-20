@@ -15,6 +15,7 @@ outdir = "figs/"
 app_names = []
 num_addr = []
 num_tags = []
+num_pcs = []
 num_addr_seqs = []
 num_tag_seqs = []
 
@@ -31,7 +32,7 @@ def parse(dir, name):
         freqs = [int(entry[1]) for entry in entries]
 
         num_intervals = 10
-        if (name == "addr" or name == "tags"):
+        if (name == "addr" or name == "tags" or name == "pcs"):
             tags = [int(entry[0]) for entry in entries]
             x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
             xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
@@ -42,6 +43,9 @@ def parse(dir, name):
             elif (name == "tags"):
                 xname = "Tag"
                 num_tags.append(len(tags))
+            elif (name == "pcs"):
+                xname = "PC"
+                num_pcs.append(len(tags))
         else:
             tags = [entry[0] for entry in entries]
             xticks = []
@@ -51,6 +55,8 @@ def parse(dir, name):
             elif (name == "tag_seqs"):
                 xname = "Tag Sequence ID"
                 num_tag_seqs.append(len(tags))
+            elif (name == "tag_pc"):
+                xname = "Tag"
             
 
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
@@ -81,9 +87,9 @@ def parse(dir, name):
         # ----- CREATE HISTOGRAM -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
-        ax1 = fig.add_subplot(111)
+        ax = fig.add_subplot(111)
 
-        ax.hist(freqs, bins=20, color=color)
+        ax.hist(freqs, bins='auto', color=color)
         #ax.set_xticks(xticks)
         #ax.set_yticks(yticks)
         ax.set_xlabel("Bin", size=LABEL_FONTSIZE)
@@ -95,7 +101,6 @@ def parse(dir, name):
         
         #plt.show()
         plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
-        sys.exit(1)
 
 def final_plot(name, y_data):
     fig = plt.figure(figsize=(25.0, 15.0))
@@ -115,9 +120,9 @@ def final_plot(name, y_data):
 
 def main():
     dir = sys.argv[1]
+    parse(dir, "pcs")
     parse(dir, "addr")
     parse(dir, "tags")
-    parse(dir, "pcs")
     sys.exit(1)
 
     final_plot("num_seqs", num_seqs)
