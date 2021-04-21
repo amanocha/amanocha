@@ -82,8 +82,9 @@ def parse(dir, name):
         plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
 
         #plt.show()
-        plt.savefig(outdir + app + "_" + name + ".png")
+        plt.savefig(outdir + app + "_" + name + ".png", bbox_inches='tight')
 
+        '''
         # ----- CREATE HISTOGRAM -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
@@ -101,6 +102,7 @@ def parse(dir, name):
         
         #plt.show()
         plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
+        '''
 
 def final_plot(name, y_data):
     fig = plt.figure(figsize=(25.0, 15.0))
