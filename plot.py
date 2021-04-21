@@ -62,6 +62,7 @@ def parse(dir, name):
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
 
+        '''
         # ----- CREATE FREQ PLOT -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
@@ -84,7 +85,6 @@ def parse(dir, name):
         #plt.show()
         plt.savefig(outdir + app + "_" + name + ".png", bbox_inches='tight')
 
-        '''
         # ----- CREATE HISTOGRAM -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
@@ -113,22 +113,22 @@ def final_plot(name, y_data):
     ax.bar(x_pos, y_data)
     ax.set_xticklabels(ax.get_xticks(), rotation = 90)
     ax.set_xlabel("App", size=LABEL_FONTSIZE)
-    ax.set_ylabel("# Unique Tags", size=LABEL_FONTSIZE)
+    ax.set_ylabel("# Unique " + name, size=LABEL_FONTSIZE)
     plt.xticks(x_pos, app_names)
     plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
     plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
 
-    plt.savefig(outdir + name + ".png")
+    plt.savefig(outdir + name.lower() + ".png")
 
 def main():
     dir = sys.argv[1]
     parse(dir, "pcs")
     parse(dir, "addr")
     parse(dir, "tags")
-    sys.exit(1)
 
-    final_plot("num_seqs", num_seqs)
-    final_plot("num_tags", num_tags)
+    final_plot("PCs", num_pcs)
+    final_plot("Addresses", num_addr)
+    final_plot("Tags", num_tags)
 
 if __name__ == "__main__":
     main()
