@@ -10,7 +10,7 @@ TICK_FONTSIZE = 24
 ROUND = 1e7
 size=(25.0, 15.0)
 color='blue'
-outdir = "figs/"
+outdir = ""
 
 app_names = []
 num_addr = []
@@ -52,12 +52,13 @@ def parse(dir, name):
             xticks = []
             if (name == "addr_seqs"):
                 xname = "Address Sequence ID"
+                app_names.append(app)
                 num_addr_seqs.append(len(tags))
             elif (name == "tag_seqs"):
                 xname = "Tag Sequence ID"
                 num_tag_seqs.append(len(tags))
             elif (name == "tag_pc"):
-                xname = "Tag"
+                xname = "Tag-PC Sequence ID"
                 num_tag_pcs.append(len(tags))
 
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
@@ -122,8 +123,12 @@ def final_plot(name, y_data):
     plt.savefig(outdir + name.lower() + ".png")
 
 def main():
+    global outdir
+
     dir = sys.argv[1]
+    outdir = dir.replace("output", "figs")
     
+    '''
     parse(dir, "addr")
     final_plot("Addresses", num_addr)
     parse(dir, "tags")
@@ -139,7 +144,6 @@ def main():
     final_plot("Address Sequences", num_addr_seqs)
     final_plot("Tag Sequencess", num_tag_seqs)
     final_plot("Tag-PC Sequences", num_tag_pcs)
-    '''
 
 if __name__ == "__main__":
     main()
