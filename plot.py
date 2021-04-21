@@ -18,11 +18,12 @@ num_tags = []
 num_pcs = []
 num_addr_seqs = []
 num_tag_seqs = []
+num_tag_pcs = []
 
 def parse(dir, name):
-    global app_names, num_tags, num_addr_seqs, num_tag_seqs
+    global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs
 
-    for app in os.listdir(dir):
+    for app in sorted(os.listdir(dir)):
 
         # ----- PARSE DATA -----
         print(app)
@@ -36,9 +37,9 @@ def parse(dir, name):
             tags = [int(entry[0]) for entry in entries]
             x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
             xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
-            app_names.append(app)
             if (name == "addr"):
                 xname = "Address"
+                app_names.append(app)
                 num_addr.append(len(tags))
             elif (name == "tags"):
                 xname = "Tag"
@@ -57,7 +58,7 @@ def parse(dir, name):
                 num_tag_seqs.append(len(tags))
             elif (name == "tag_pc"):
                 xname = "Tag"
-            
+                num_tag_pcs.append(len(tags))
 
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
@@ -122,13 +123,23 @@ def final_plot(name, y_data):
 
 def main():
     dir = sys.argv[1]
-    parse(dir, "pcs")
+    
     parse(dir, "addr")
-    parse(dir, "tags")
-
-    final_plot("PCs", num_pcs)
     final_plot("Addresses", num_addr)
+    parse(dir, "tags")
     final_plot("Tags", num_tags)
+    parse(dir, "pcs")
+    final_plot("PCs", num_pcs)
+    '''
+
+    parse(dir, "addr_seqs")
+    parse(dir, "tag_seqs")
+    parse(dir, "tag_pc")
+
+    final_plot("Address Sequences", num_addr_seqs)
+    final_plot("Tag Sequencess", num_tag_seqs)
+    final_plot("Tag-PC Sequences", num_tag_pcs)
+    '''
 
 if __name__ == "__main__":
     main()
