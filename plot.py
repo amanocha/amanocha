@@ -38,8 +38,8 @@ def parse(dir, name):
             x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
             xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
             if (name == "addr"):
-                xname = "Address"
                 app_names.append(app)
+                xname = "Address"
                 num_addr.append(len(tags))
             elif (name == "tags"):
                 xname = "Tag"
@@ -48,13 +48,23 @@ def parse(dir, name):
                 xname = "PC"
                 num_pcs.append(len(tags))
         else:
-            tags = [entry[0] for entry in entries]
+            tags = np.arange(len(freqs))
             xticks = []
             if (name == "addr_seqs"):
-                xname = "Address Sequence ID"
                 app_names.append(app)
+                xname = "Address Sequence ID"
                 num_addr_seqs.append(len(tags))
             elif (name == "tag_seqs"):
+                '''
+                tag_lists = [entry[0].split("_") for entry in entries]
+                combos = {}
+                for entry in tag_lists:
+                  combo = set(entry)
+                  print(combo)
+                  if combo not in combos:
+                    combos[combo] = 0
+                  combos[combo] += 1
+                '''
                 xname = "Tag Sequence ID"
                 num_tag_seqs.append(len(tags))
             elif (name == "tag_pc"):
@@ -64,7 +74,6 @@ def parse(dir, name):
         y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
 
-        '''
         # ----- CREATE FREQ PLOT -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
@@ -87,6 +96,7 @@ def parse(dir, name):
         #plt.show()
         plt.savefig(outdir + app + "_" + name + ".png", bbox_inches='tight')
 
+        '''
         # ----- CREATE HISTOGRAM -----
         fig = plt.figure(figsize=size)
         fig.subplots_adjust(bottom=0.1)
@@ -142,7 +152,7 @@ def main():
     parse(dir, "tag_pc")
 
     final_plot("Address Sequences", num_addr_seqs)
-    final_plot("Tag Sequencess", num_tag_seqs)
+    final_plot("Tag Sequences", num_tag_seqs)
     final_plot("Tag-PC Sequences", num_tag_pcs)
 
 if __name__ == "__main__":
