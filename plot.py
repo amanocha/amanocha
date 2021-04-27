@@ -58,11 +58,13 @@ def parse(dir, name):
                 app_names.append(app)
                 tag_lists = [entry[0].split("_") for entry in entries]
                 combos = {}
-                for entry in tag_lists:
+                for e in range(len(tag_lists)):
+                  freq = freqs[e]
+                  entry = tag_lists[e]
                   combo = frozenset(entry)
                   if combo not in combos:
                     combos[combo] = 0
-                  combos[combo] += 1
+                  combos[combo] += freq
                 freqs = combos.values()
                 tags = np.arange(len(freqs))
                 xname = "Tag Combination ID"
