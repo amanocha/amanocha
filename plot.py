@@ -19,6 +19,7 @@ num_pcs = []
 num_addr_seqs = []
 num_tag_seqs = []
 num_tag_pcs = []
+num_tag_combos = []
 
 def parse(dir, name):
     global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs
@@ -51,22 +52,23 @@ def parse(dir, name):
             tags = np.arange(len(freqs))
             xticks = []
             if (name == "addr_seqs"):
-                app_names.append(app)
                 xname = "Address Sequence ID"
                 num_addr_seqs.append(len(tags))
             elif (name == "tag_seqs"):
-                '''
+                app_names.append(app)
                 tag_lists = [entry[0].split("_") for entry in entries]
                 combos = {}
                 for entry in tag_lists:
-                  combo = set(entry)
-                  print(combo)
+                  combo = frozenset(entry)
                   if combo not in combos:
                     combos[combo] = 0
                   combos[combo] += 1
-                '''
-                xname = "Tag Sequence ID"
-                num_tag_seqs.append(len(tags))
+                freqs = combos.values()
+                tags = np.arange(len(freqs))
+                xname = "Tag Combination ID"
+                num_tag_combos.append(len(tags))
+                #xname = "Tag Sequence ID"
+                #num_tag_seqs.append(len(tags))
             elif (name == "tag_pc"):
                 xname = "Tag-PC Sequence ID"
                 num_tag_pcs.append(len(tags))
@@ -94,7 +96,7 @@ def parse(dir, name):
         plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
 
         #plt.show()
-        plt.savefig(outdir + app + "_" + name + ".png", bbox_inches='tight')
+        plt.savefig(outdir + app + "_" + name + "_combos.png", bbox_inches='tight')
 
         '''
         # ----- CREATE HISTOGRAM -----
@@ -147,13 +149,14 @@ def main():
     final_plot("PCs", num_pcs)
     '''
 
-    parse(dir, "addr_seqs")
+    #parse(dir, "addr_seqs")
     parse(dir, "tag_seqs")
-    parse(dir, "tag_pc")
+    #parse(dir, "tag_pc")
 
-    final_plot("Address Sequences", num_addr_seqs)
-    final_plot("Tag Sequences", num_tag_seqs)
-    final_plot("Tag-PC Sequences", num_tag_pcs)
+    #final_plot("Address Sequences", num_addr_seqs)
+    #final_plot("Tag Sequences", num_tag_seqs)
+    #final_plot("Tag-PC Sequences", num_tag_pcs)
+    final_plot("2-Tag Combinations", num_tag_combos)
 
 if __name__ == "__main__":
     main()
