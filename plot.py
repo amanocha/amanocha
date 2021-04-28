@@ -19,10 +19,11 @@ num_pcs = []
 num_addr_seqs = []
 num_tag_seqs = []
 num_tag_pcs = []
+num_addr_combos = []
 num_tag_combos = []
 
 def parse(dir, name):
-    global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs
+    global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs, num_addr_combos, num_tag_combos
 
     for app in sorted(os.listdir(dir)):
 
@@ -36,8 +37,8 @@ def parse(dir, name):
         num_intervals = 10
         if (name == "addr" or name == "tags" or name == "pcs"):
             tags = [int(entry[0]) for entry in entries]
-            x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
-            xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
+            #x_interval = math.ceil(max(tags)/num_intervals/ROUND)*ROUND
+            #xticks = np.arange(0, x_interval*(num_intervals+1), x_interval)
             if (name == "addr"):
                 app_names.append(app)
                 xname = "Address"
@@ -52,10 +53,23 @@ def parse(dir, name):
             tags = np.arange(len(freqs))
             xticks = []
             if (name == "addr_seqs"):
-                xname = "Address Sequence ID"
-                num_addr_seqs.append(len(tags))
+                addr_lists = [entry[0].split("_") for entry in entries]
+                combos = {}
+                for e in range(len(addr_lists)):
+                  freq = freqs[e]
+                  entry = addr_lists[e]
+                  combo = frozenset(entry)
+                  if combo not in combos:
+                    combos[combo] = 0
+                  combos[combo] += freq
+                freqs = combos.values()
+                tags = np.arange(len(freqs))
+                xname = "Address Combination ID"
+                num_addr_combos.append(len(tags))
+ 
+                #xname = "Address Sequence ID"
+                #num_addr_seqs.append(len(tags))
             elif (name == "tag_seqs"):
-                app_names.append(app)
                 tag_lists = [entry[0].split("_") for entry in entries]
                 combos = {}
                 for e in range(len(tag_lists)):
@@ -69,56 +83,77 @@ def parse(dir, name):
                 tags = np.arange(len(freqs))
                 xname = "Tag Combination ID"
                 num_tag_combos.append(len(tags))
+                
                 #xname = "Tag Sequence ID"
                 #num_tag_seqs.append(len(tags))
             elif (name == "tag_pc"):
-                xname = "Tag-PC Sequence ID"
-                num_tag_pcs.append(len(tags))
+                app_names.append(app)
+                lists = [entry[0].split("_") for entry in entries]
+                tags = {}
+                pcs = {}
+                for e in range(len(lists)):
+                  freq = freqs[e]
+                  tag = tag_lists[e][0]
+                  pc = tag_lists[e][1]
+                  if pc not in tags[tag]:
+                    tags[tag].append(pc)
+                  if tag not in pcs[pc]:
+                    pcs[pc].append(tag)
 
-        y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
-        yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
+                tag_sizes = tags.values()
+                freqs1 = [len(sz) for sz in tag_sizes]
+                tags1 = tags.keys()
+                plot(tags1, freqs1, app, name + "_tag")
 
-        # ----- CREATE FREQ PLOT -----
-        fig = plt.figure(figsize=size)
-        fig.subplots_adjust(bottom=0.1)
-        ax = fig.add_subplot(111)
+                pc_sizes = pcs.values()
+                freqs2 = [len(sz) for sz in pc_sizes]
+                tags2 = pcs.keys() 
+                plot(tags2, freqs2, app, name + "_pc")
 
-        ax.scatter(tags, freqs, s=50)
-        #ax.set_xticks(xticks)
-        #ax.set_yticks(yticks)
-        ax.set_xlabel(xname, size=LABEL_FONTSIZE)
-        ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
-        ax.set_title(app, size=1.25*LABEL_FONTSIZE)
+                #xname = "Tag-PC Sequence ID"
+                #num_tag_pcs.append(len(tags))
 
-        formatter = ticker.ScalarFormatter(useMathText=True)
-        formatter.set_scientific(True)
-        ax.xaxis.set_major_formatter(formatter)
-        ax.set_yscale('log')
-        plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
-        plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
+        #y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
+        #yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
 
-        #plt.show()
-        plt.savefig(outdir + app + "_" + name + "_combos.png", bbox_inches='tight')
+def plot(x, y, app, name):
+    # ----- CREATE FREQ PLOT -----
+    fig = plt.figure(figsize=size)
+    fig.subplots_adjust(bottom=0.1)
+    ax = fig.add_subplot(111)
 
-        '''
-        # ----- CREATE HISTOGRAM -----
-        fig = plt.figure(figsize=size)
-        fig.subplots_adjust(bottom=0.1)
-        ax = fig.add_subplot(111)
+    ax.scatter(x, y, s=50)
+    ax.set_xlabel(xname, size=LABEL_FONTSIZE)
+    ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
+    ax.set_title(app, size=1.25*LABEL_FONTSIZE)
 
-        ax.hist(freqs, bins='auto', color=color)
-        #ax.set_xticks(xticks)
-        #ax.set_yticks(yticks)
-        ax.set_xlabel("Bin", size=LABEL_FONTSIZE)
-        ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
-        ax.set_title(app, size=1.25*LABEL_FONTSIZE)
-        ax.set_yscale('log')
-        plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
-        plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    ax.xaxis.set_major_formatter(formatter)
+    ax.set_yscale('log')
+    plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
+    plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
+
+    #plt.show()
+    plt.savefig(outdir + app + "_" + name + "_combos.png", bbox_inches='tight')
+
+    '''
+    # ----- CREATE HISTOGRAM -----
+    fig = plt.figure(figsize=size)
+    fig.subplots_adjust(bottom=0.1)
+    ax = fig.add_subplot(111)
+
+    ax.hist(y, bins='auto', color=color)
+    ax.set_xlabel("Bin", size=LABEL_FONTSIZE)
+    ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
+    ax.set_title(app, size=1.25*LABEL_FONTSIZE)
+    ax.set_yscale('log')
+    plt.setp(ax.get_xticklabels(), fontsize=TICK_FONTSIZE)
+    plt.setp(ax.get_yticklabels(), fontsize=TICK_FONTSIZE)
         
-        #plt.show()
-        plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
-        '''
+    #plt.show()
+    plt.savefig(outdir + app + "_" + name + "_hist.png", bbox_inches='tight')
+    '''
 
 def final_plot(name, y_data):
     fig = plt.figure(figsize=(25.0, 15.0))
@@ -151,14 +186,16 @@ def main():
     final_plot("PCs", num_pcs)
     '''
 
-    #parse(dir, "addr_seqs")
-    parse(dir, "tag_seqs")
+    parse(dir, "addr_seqs")
+    #parse(dir, "tag_seqs")
     #parse(dir, "tag_pc")
 
     #final_plot("Address Sequences", num_addr_seqs)
     #final_plot("Tag Sequences", num_tag_seqs)
     #final_plot("Tag-PC Sequences", num_tag_pcs)
-    final_plot("2-Tag Combinations", num_tag_combos)
+    
+    final_plot("2-Address Combinations", num_addr_combos)
+    #final_plot("2-Tag Combinations", num_tag_combos)
 
 if __name__ == "__main__":
     main()
