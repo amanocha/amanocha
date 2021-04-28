@@ -21,9 +21,11 @@ num_tag_seqs = []
 num_tag_pcs = []
 num_addr_combos = []
 num_tag_combos = []
+avg_per_tag = []
+avg_per_pc = []
 
 def parse(dir, name):
-    global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs, num_addr_combos, num_tag_combos
+    global app_names, num_addr, num_tags, num_pcs, num_addr_seqs, num_tag_seqs, num_tag_pcs, num_addr_combos, num_tag_combos, avg_per_tag, avg_per_pc
 
     for app in sorted(os.listdir(dir)):
 
@@ -106,11 +108,15 @@ def parse(dir, name):
 
                 tag_sizes = tags.values()
                 freqs1 = [len(sz) for sz in tag_sizes]
+                avg1 = float(sum(freqs1))/len(freqs1)
+                avg_per_tag.append(avg1)
                 tags1 = tags.keys()
                 plot(tags1, freqs1, "Tag", app, name + "_tag")
 
                 pc_sizes = pcs.values()
                 freqs2 = [len(sz) for sz in pc_sizes]
+                avg2 = float(sum(freqs2))/len(freqs2)
+                avg_per_pc.append(avg2)
                 tags2 = pcs.keys() 
                 plot(tags2, freqs2, "PC", app, name + "_pc")
 
@@ -201,6 +207,8 @@ def main():
     
     #final_plot("2-Address Combinations", num_addr_combos)
     #final_plot("2-Tag Combinations", num_tag_combos)
+    final_plot("Avg # PCs Per Tag", avg_per_tag)
+    final_plot("Avg # Tags Per PC", avg_per_pc)
 
 if __name__ == "__main__":
     main()
