@@ -111,23 +111,23 @@ def parse(dir, name):
                 avg1 = float(sum(freqs1))/len(freqs1)
                 avg_per_tag.append(avg1)
                 tags1 = tags.keys()
-                plot(tags1, freqs1, "Tag", app, name + "_tag")
+                plot(tags1, freqs1, "Tag", "# PCs", app, name + "_tag")
 
                 pc_sizes = pcs.values()
                 freqs2 = [len(sz) for sz in pc_sizes]
                 avg2 = float(sum(freqs2))/len(freqs2)
                 avg_per_pc.append(avg2)
                 tags2 = pcs.keys() 
-                plot(tags2, freqs2, "PC", app, name + "_pc")
+                plot(tags2, freqs2, "PC", "# Tags", app, name + "_pc")
 
                 #xname = "Tag-PC Sequence ID"
                 #num_tag_pcs.append(len(tags))
 
         #y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         #yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
-        #plot(tags, freqs, xname, app, name)
+        #plot(tags, freqs, xname, "Frequency", app, name)
 
-def plot(x, y, xname, app, name):
+def plot(x, y, xname, yname, app, name):
     # ----- CREATE FREQ PLOT -----
     fig = plt.figure(figsize=size)
     fig.subplots_adjust(bottom=0.1)
@@ -135,7 +135,7 @@ def plot(x, y, xname, app, name):
 
     ax.scatter(x, y, s=50)
     ax.set_xlabel(xname, size=LABEL_FONTSIZE)
-    ax.set_ylabel("Frequency", size=LABEL_FONTSIZE)
+    ax.set_ylabel(yname, size=LABEL_FONTSIZE)
     ax.set_title(app, size=1.25*LABEL_FONTSIZE)
 
     formatter = ticker.ScalarFormatter(useMathText=True)
