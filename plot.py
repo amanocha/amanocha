@@ -93,30 +93,35 @@ def parse(dir, name):
                 pcs = {}
                 for e in range(len(lists)):
                   freq = freqs[e]
-                  tag = tag_lists[e][0]
-                  pc = tag_lists[e][1]
+                  tag = int(lists[e][0])
+                  pc = int(lists[e][1])
+                  if tag not in tags:
+                    tags[tag] = []
                   if pc not in tags[tag]:
                     tags[tag].append(pc)
+                  if pc not in pcs:
+                    pcs[pc] = []
                   if tag not in pcs[pc]:
                     pcs[pc].append(tag)
 
                 tag_sizes = tags.values()
                 freqs1 = [len(sz) for sz in tag_sizes]
                 tags1 = tags.keys()
-                plot(tags1, freqs1, app, name + "_tag")
+                plot(tags1, freqs1, "Tag", app, name + "_tag")
 
                 pc_sizes = pcs.values()
                 freqs2 = [len(sz) for sz in pc_sizes]
                 tags2 = pcs.keys() 
-                plot(tags2, freqs2, app, name + "_pc")
+                plot(tags2, freqs2, "PC", app, name + "_pc")
 
                 #xname = "Tag-PC Sequence ID"
                 #num_tag_pcs.append(len(tags))
 
         #y_interval = math.ceil(max(freqs)/num_intervals/ROUND)*ROUND
         #yticks = np.arange(0, y_interval*(num_intervals+1), y_interval)
+        #plot(tags, freqs, xname, app, name)
 
-def plot(x, y, app, name):
+def plot(x, y, xname, app, name):
     # ----- CREATE FREQ PLOT -----
     fig = plt.figure(figsize=size)
     fig.subplots_adjust(bottom=0.1)
@@ -186,15 +191,15 @@ def main():
     final_plot("PCs", num_pcs)
     '''
 
-    parse(dir, "addr_seqs")
+    #parse(dir, "addr_seqs")
     #parse(dir, "tag_seqs")
-    #parse(dir, "tag_pc")
+    parse(dir, "tag_pc")
 
     #final_plot("Address Sequences", num_addr_seqs)
     #final_plot("Tag Sequences", num_tag_seqs)
     #final_plot("Tag-PC Sequences", num_tag_pcs)
     
-    final_plot("2-Address Combinations", num_addr_combos)
+    #final_plot("2-Address Combinations", num_addr_combos)
     #final_plot("2-Tag Combinations", num_tag_combos)
 
 if __name__ == "__main__":
