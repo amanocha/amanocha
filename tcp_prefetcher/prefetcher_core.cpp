@@ -1,10 +1,12 @@
 // meta data cache 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
 #include <list>
+#include <functional>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,9 +41,9 @@ unsigned long long int tag_2_address(cache_t * my_cache, unsigned long long int 
 	return (in_tag << (log_base2(my_cache->num_set) + log_base2(my_cache->num_offset))) + (set << log_base2(my_cache->num_offset));
 }
 
-unsigned long long int tcp_tag_2_address(unsigned long long int in_tag, int set)
+unsigned long long int tcp_tag_2_address(unsigned long long int in_tag, int set, int llc_sets)
 {
-    return (in_tag << (log_base2(SETS) + log_base2(OFFSETS))) + (set << log_base2(OFFSETS));
+    return (in_tag << (log_base2(llc_sets) + log_base2(OFFSETS))) + (set << log_base2(OFFSETS));
 }
 
 // to malloc a new cache and initialize it 
@@ -235,44 +237,60 @@ void print_cache (cache_t * my_cache)
 	
 }
 
-int find_pht_index(vector<unsigned long long int> &tht_set, int index, int m, int n, int scheme) {
+int find_pht_index(list<unsigned long long int> &tht_set, int index, int m, int n, int scheme) {
 
     int pht_index;
+    size_t hash_output;
+    stringstream s;
+    hash<string> hash_fn;
+    long long int tag_sum = 0;
+    
+    for(list<unsigned long long int>::iterator it=tht_set.begin(); it!=tht_set.end(); it++) {
+        if(scheme == 0 || scheme == 1) {
+            tag_sum += *it;
+        }
+        else if(scheme == 2 || scheme == 3) {
+            s << hex << *it;
+        }
+    }
     
     if(scheme == 0) {
- 
-        unsigned long long int tag_sum = 0;
-        for(int i=0; i< tht_set.size(); i++) {
-            tag_sum += tht_set[i];
-        }
         pht_index = (int) (((tag_sum & (((long long int)0x1 << m) -1)) << n) | (index & (((long long int)0x1 << n) -1)));
+    }
+    else if(scheme == 1) {
+        pht_index = (int) (tag_sum & (((long long int)0x1 << (m+n)) -1));
+    }
+    else if(scheme == 2) {
+        hash_output = hash_fn(s.str());
+        pht_index = (int) ((((long long int)hash_output & (((long long int)0x1 << m) -1)) << n) | (index & (((long long int)0x1 << n) -1)));   
+    }
+    else if(scheme == 3) {
+        hash_output = hash_fn(s.str());
+        pht_index = (int) ((long long int)hash_output & (((long long int)0x1 << (m+n)) -1));
     }
     
     return pht_index;
 }
 
-unsigned long long int find_pht_tag(vector<unsigned long long int> &tht_set, int tht_tail, int scheme) {
+unsigned long long int find_pht_tag(list<unsigned long long int> &tht_set, int scheme) {
     
     unsigned long long int pht_tag;
 
     if(scheme == 0) {
-        pht_tag = tht_set[tht_tail];
+        pht_tag = tht_set.front();
     }
 
     return pht_tag;
 }
 
-void update_tables(vector<vector<unsigned long long int> > &tht_table, 
-                                         vector<list<pht_entry> > &pht_table, 
+void update_tables(vector<list<unsigned long long int> > &tht_table, vector<list<pht_entry> > &pht_table, 
                                          int pht_ways,
-                                         vector<int> &tht_table_tails, 
-                                         int tht_length, 
-                                         int ld_miss_index,
-                                         unsigned long long int ld_miss_tag,
-                                         int m, int n, int pht_index_scheme, int pht_tag_scheme) {
+                                         int ld_miss_index, unsigned long long int ld_miss_tag,
+                                         int m, int n, 
+                                         int tht_ordering_scheme, int pht_index_scheme, int pht_tag_scheme) {
 
     int pht_index = find_pht_index(tht_table[ld_miss_index], ld_miss_index, m, n, pht_index_scheme);
-    unsigned long long int pht_tag = find_pht_tag(tht_table[ld_miss_index], tht_table_tails[ld_miss_index], pht_tag_scheme);
+    unsigned long long int pht_tag = find_pht_tag(tht_table[ld_miss_index], pht_tag_scheme);
     bool pht_entry_found = false;
 
     for (list<pht_entry>::iterator it=pht_table[pht_index].begin(); it!=pht_table[pht_index].end(); it++) {
@@ -290,18 +308,37 @@ void update_tables(vector<vector<unsigned long long int> > &tht_table,
     
     pht_entry new_entry = {pht_tag, ld_miss_tag};
     pht_table[pht_index].push_front(new_entry);
-    
-    int new_tail = (tht_table_tails[ld_miss_index] + 1)%tht_length;
-    tht_table_tails[ld_miss_index] = new_tail;
-    tht_table[ld_miss_index][new_tail] = ld_miss_tag;
+
+    if(tht_ordering_scheme == 0) {
+        tht_table[ld_miss_index].pop_back();
+        tht_table[ld_miss_index].push_front(ld_miss_tag);
+    }
+    else if(tht_ordering_scheme == 1) {
+        if(tht_table[ld_miss_index].front() != ld_miss_tag) {
+            tht_table[ld_miss_index].pop_back();
+            tht_table[ld_miss_index].push_front(ld_miss_tag);
+        }
+    }
+    else if(tht_ordering_scheme == 2) {
+        bool tht_entry_found = false;
+        for (list<unsigned long long int>::iterator it=tht_table[ld_miss_index].begin(); it!=tht_table[ld_miss_index].end(); it++) {
+            if(*it == ld_miss_tag) {
+                tht_table[ld_miss_index].erase(it);
+                tht_entry_found = true;
+                break;
+            }
+        }
+        if(!tht_entry_found) 
+            tht_table[ld_miss_index].pop_back();
+
+        tht_table[ld_miss_index].push_front(ld_miss_tag);
+    }
 }
 
-unsigned long long int lookup_tables(vector<vector<unsigned long long int> > &tht_table,
-                                     vector<list<pht_entry> > &pht_table,
-                                     int pht_ways,
-                                     int ld_miss_index, 
-                                     unsigned long long int ld_miss_tag,
-                                     int m, int n, int pht_index_scheme, int pht_tag_scheme, int replacement_scheme) {
+unsigned long long int lookup_tables(vector<list<unsigned long long int> > &tht_table, vector<list<pht_entry> > &pht_table,
+                                     int ld_miss_index, unsigned long long int ld_miss_tag,
+                                     int m, int n, 
+                                     int pht_index_scheme, int pht_tag_scheme, int replacement_scheme, int llc_sets) {
 
     int pht_index = find_pht_index(tht_table[ld_miss_index], ld_miss_index, m, n, pht_index_scheme);
     unsigned long long int prefetch_addr = 0;
@@ -324,7 +361,7 @@ unsigned long long int lookup_tables(vector<vector<unsigned long long int> > &th
             pht_entry new_entry = {ld_miss_tag, prefetch_addr};
             pht_table[pht_index].push_front(new_entry);
         }
-        prefetch_addr = tcp_tag_2_address(prefetch_addr, ld_miss_index);
+        prefetch_addr = tcp_tag_2_address(prefetch_addr, ld_miss_index, llc_sets);
     }
 
     return prefetch_addr;
@@ -343,18 +380,19 @@ int main(int argc, char** argv) {
     int llc_hit;
     int miss_index;
     unsigned long long int miss_tag;
-    int tht_length = atoi(argv[2]); //tag history length
+    int tht_ways = atoi(argv[2]); //tag history length
     int pht_ways = atoi(argv[3]);
     int m = atoi(argv[4]);
     int n = atoi(argv[5]);
-    int pht_index_scheme = atoi(argv[6]);
-    int pht_tag_scheme = atoi(argv[7]);
-    int replacement_scheme = atoi(argv[8]);
+    int tht_ordering_scheme = atoi(argv[6]);
+    int pht_index_scheme = atoi(argv[7]);
+    int pht_tag_scheme = atoi(argv[8]);
+    int replacement_scheme = atoi(argv[9]);
+    int llc_sets = atoi(argv[10]);
     unsigned long long int prefetch_addr;
     int pht_sets = 1 << (m+n);
 
-    vector<vector<unsigned long long int> > tht(SETS, vector<unsigned long long int>(tht_length, 0));
-    vector<int> tht_tails(SETS,0);
+    vector<list<unsigned long long int> > tht(llc_sets, list<unsigned long long int>(tht_ways, 0));
     vector<list<pht_entry> > pht(pht_sets, list<pht_entry>()); 
 
     while(getline(trace_file, trace_line)) {
@@ -366,14 +404,14 @@ int main(int argc, char** argv) {
             return -1;            
         }
 
-        miss_index = find_set(OFFSETS, SETS, ld_addr);
-        miss_tag = find_tag(OFFSETS, SETS, ld_addr);
+        miss_index = find_set(OFFSETS, llc_sets, ld_addr);
+        miss_tag = find_tag(OFFSETS, llc_sets, ld_addr);
         
-        update_tables(tht, pht, pht_ways, tht_tails, tht_length, miss_index, miss_tag, m, n, pht_index_scheme, pht_tag_scheme);
-        prefetch_addr = lookup_tables(tht, pht, pht_ways, miss_index, miss_tag, m, n, pht_index_scheme, pht_tag_scheme, replacement_scheme);
+        update_tables(tht, pht, pht_ways, miss_index, miss_tag, m, n, tht_ordering_scheme, pht_index_scheme, pht_tag_scheme);
+        prefetch_addr = lookup_tables(tht, pht, miss_index, miss_tag, m, n, pht_index_scheme, pht_tag_scheme, replacement_scheme, llc_sets);
         
         if(prefetch_addr) {
-            cout << unq_inst_id << " " << prefetch_addr << "\n";
+            cout << dec << unq_inst_id << " " << hex << prefetch_addr << endl;
         }
     }
     trace_file.close(); 
