@@ -21,7 +21,7 @@ do
   fi
   
  # eval "./bin/hashed_perceptron-no-no-no-${prefetcher}-lru-1core -prefetch_warmup_instructions ${warm}000000 -simulation_instructions ${instructions}000000 -traces $file > results/${prefix}_${prefetcher}.txt 2>&1 &"
-  eval "./bin/hashed_perceptron-no-no-no-${prefetcher}-lru-1core -prefetch_warmup_instructions ${warm}000000 -simulation_instructions ${instructions}000000 -traces $file > results/${fileprefix}-hashed_perceptron-no-no-no-${prefetcher}-lru-1core.txt 2>&1 &"
+  eval "./bin/hashed_perceptron-no-no-no-${prefetcher}-lru-1core -prefetch_warmup_instructions ${warm}000000 -simulation_instructions ${instructions}000000 -traces $file > results/baseline/${fileprefix}-hashed_perceptron-no-no-no-${prefetcher}-lru-1core.txt 2>&1 &"
   sleep 10
 
 done
